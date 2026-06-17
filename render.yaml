@@ -28,8 +28,9 @@ services:
         sync: false
 
   # ── Frontend ───────────────────────────────────────────────────────────────
-  - type: static
+  - type: web
     name: linkedin-mcp-frontend
+    env: static
     buildCommand: cd frontend && npm install --frozen-lockfile && npm run build
     staticPublishPath: ./frontend/dist
     routes:

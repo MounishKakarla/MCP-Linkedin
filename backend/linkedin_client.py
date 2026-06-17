@@ -18,7 +18,7 @@ class LinkedInClient:
             base_url=REST_BASE_URL,
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "LinkedIn-Version": "202401",
+                "LinkedIn-Version": "202501",
                 "X-Restli-Protocol-Version": "2.0.0",
             },
         )

@@ -9,11 +9,15 @@ from urllib.parse import urlencode
 SCOPES = "openid profile email"
 
 
+def _redirect_uri() -> str:
+    return os.environ["LINKEDIN_REDIRECT_URI"].strip()
+
+
 def get_authorization_url(state: str) -> str:
     params = {
         "response_type": "code",
         "client_id": os.environ["LINKEDIN_CLIENT_ID"],
-        "redirect_uri": os.environ["LINKEDIN_REDIRECT_URI"],
+        "redirect_uri": _redirect_uri(),
         "state": state,
         "scope": SCOPES,
     }
@@ -27,7 +31,7 @@ async def exchange_code_for_token(code: str) -> dict:
             data={
                 "grant_type": "authorization_code",
                 "code": code,
-                "redirect_uri": os.environ["LINKEDIN_REDIRECT_URI"],
+                "redirect_uri": _redirect_uri(),
                 "client_id": os.environ["LINKEDIN_CLIENT_ID"],
                 "client_secret": os.environ["LINKEDIN_CLIENT_SECRET"],
             },

@@ -31,14 +31,14 @@ export default function ActivityLog({ userId }: Props) {
   }, [userId]);
 
   return (
-    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-xl">
+    <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 dark:bg-white/5 dark:border-white/10 dark:backdrop-blur-xl dark:shadow-none">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-white/80">Activity log</span>
-        <span className="text-xs text-white/30">Refreshes every 10 s</span>
+        <span className="text-sm font-semibold text-slate-600 dark:text-white/80">Activity log</span>
+        <span className="text-xs text-slate-400 dark:text-white/30">Refreshes every 10 s</span>
       </div>
 
       {log.length === 0 ? (
-        <p className="text-sm text-white/40 py-4 text-center">
+        <p className="text-sm text-slate-400 dark:text-white/40 py-4 text-center">
           No activity yet. Start chatting or ask Claude questions.
         </p>
       ) : (
@@ -47,11 +47,11 @@ export default function ActivityLog({ userId }: Props) {
             <div
               key={i}
               className={`flex items-center justify-between py-2 ${
-                i < log.length - 1 ? 'border-b border-white/10' : ''
+                i < log.length - 1 ? 'border-b border-slate-100 dark:border-white/10' : ''
               }`}
             >
-              <span className="font-mono text-xs text-blue-300">{entry.tool_name}</span>
-              <span className="text-xs text-white/40">{formatTime(entry.called_at)}</span>
+              <span className="font-mono text-xs text-[#0077B5] dark:text-blue-300">{entry.tool_name}</span>
+              <span className="text-xs text-slate-400 dark:text-white/40">{formatTime(entry.called_at)}</span>
             </div>
           ))}
         </div>

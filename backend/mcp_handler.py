@@ -22,24 +22,61 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 inputSchema={"type": "object", "properties": {}},
             ),
             types.Tool(
+                name="get_my_recent_posts",
+                description="Get your recent LinkedIn posts (created via this app) as a numbered list with snippets and URNs.",
+                inputSchema={"type": "object", "properties": {}},
+            ),
+            types.Tool(
                 name="create_post",
-                description="Publish a text post to LinkedIn on your behalf.",
+                description="Publish a post to LinkedIn. Optionally attach one image via URL.",
                 inputSchema={
                     "type": "object",
                     "properties": {
                         "text": {"type": "string", "description": "Post content (plain text, max 3000 chars)"},
                         "visibility": {"type": "string", "enum": ["PUBLIC", "CONNECTIONS"], "default": "PUBLIC"},
+                        "image_url": {"type": "string", "description": "Optional public URL of an image to attach"},
                     },
                     "required": ["text"],
                 },
             ),
             types.Tool(
-                name="get_post",
-                description="Get a specific LinkedIn post by its URN.",
+                name="create_article_post",
+                description="Publish a post with a URL link preview.",
                 inputSchema={
                     "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "properties": {
+                        "text": {"type": "string", "description": "Post commentary"},
+                        "url": {"type": "string", "description": "URL to share"},
+                        "title": {"type": "string", "description": "Optional link title override"},
+                        "description": {"type": "string", "description": "Optional link description override"},
+                        "visibility": {"type": "string", "enum": ["PUBLIC", "CONNECTIONS"], "default": "PUBLIC"},
+                    },
+                    "required": ["text", "url"],
+                },
+            ),
+            types.Tool(
+                name="reshare_post",
+                description="Reshare an existing LinkedIn post with optional commentary.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "post_urn": {"type": "string"},
+                        "commentary": {"type": "string", "description": "Text to add when resharing"},
+                        "visibility": {"type": "string", "enum": ["PUBLIC", "CONNECTIONS"], "default": "PUBLIC"},
+                    },
                     "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="edit_post",
+                description="Edit the text of one of your LinkedIn posts.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "post_urn": {"type": "string"},
+                        "text": {"type": "string", "description": "New post content"},
+                    },
+                    "required": ["post_urn", "text"],
                 },
             ),
             types.Tool(
@@ -47,7 +84,7 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 description="Delete one of your LinkedIn posts.",
                 inputSchema={
                     "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "properties": {"post_urn": {"type": "string"}},
                     "required": ["post_urn"],
                 },
             ),
@@ -56,7 +93,7 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 description="Like a LinkedIn post.",
                 inputSchema={
                     "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "properties": {"post_urn": {"type": "string"}},
                     "required": ["post_urn"],
                 },
             ),
@@ -65,7 +102,41 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 description="Remove your like from a LinkedIn post.",
                 inputSchema={
                     "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "properties": {"post_urn": {"type": "string"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="react_to_post",
+                description="React to a post: LIKE, CELEBRATION, APPRECIATION, EMPATHY, INTEREST, or PRAISE.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "post_urn": {"type": "string"},
+                        "reaction": {
+                            "type": "string",
+                            "enum": ["LIKE", "CELEBRATION", "APPRECIATION", "EMPATHY", "INTEREST", "PRAISE"],
+                            "default": "LIKE",
+                        },
+                    },
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="remove_reaction",
+                description="Remove your reaction from a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="get_post_comments",
+                description="Get comments on a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string"}},
                     "required": ["post_urn"],
                 },
             ),
@@ -75,7 +146,7 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"},
+                        "post_urn": {"type": "string"},
                         "text": {"type": "string", "description": "Comment text"},
                     },
                     "required": ["post_urn", "text"],
@@ -87,7 +158,7 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "post_urn": {"type": "string", "description": "Post URN"},
+                        "post_urn": {"type": "string"},
                         "comment_urn": {"type": "string", "description": "Comment URN returned by comment_on_post"},
                     },
                     "required": ["post_urn", "comment_urn"],
@@ -103,19 +174,49 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
 
         if name == "get_my_profile":
             result = await client.get_profile()
+        elif name == "get_my_recent_posts":
+            result = await db.get_recent_posts(user_id)
         elif name == "create_post":
             result = await client.create_post(
                 text=args["text"],
                 visibility=args.get("visibility", "PUBLIC"),
+                image_url=args.get("image_url"),
             )
-        elif name == "get_post":
-            result = await client.get_post(args["post_urn"])
+            if result.get("postUrn"):
+                await db.save_post(user_id, result["postUrn"], args["text"])
+        elif name == "create_article_post":
+            result = await client.create_article_post(
+                text=args["text"],
+                url=args["url"],
+                title=args.get("title", ""),
+                description=args.get("description", ""),
+                visibility=args.get("visibility", "PUBLIC"),
+            )
+            if result.get("postUrn"):
+                await db.save_post(user_id, result["postUrn"], args["text"])
+        elif name == "reshare_post":
+            result = await client.reshare_post(
+                post_urn=args["post_urn"],
+                commentary=args.get("commentary", ""),
+                visibility=args.get("visibility", "PUBLIC"),
+            )
+            if result.get("postUrn"):
+                label = args.get("commentary") or f"reshared {args['post_urn']}"
+                await db.save_post(user_id, result["postUrn"], label)
+        elif name == "edit_post":
+            result = await client.edit_post(args["post_urn"], args["text"])
         elif name == "delete_post":
             result = await client.delete_post(args["post_urn"])
         elif name == "like_post":
             result = await client.like_post(args["post_urn"])
         elif name == "unlike_post":
             result = await client.unlike_post(args["post_urn"])
+        elif name == "react_to_post":
+            result = await client.react_to_post(args["post_urn"], args.get("reaction", "LIKE"))
+        elif name == "remove_reaction":
+            result = await client.remove_reaction(args["post_urn"])
+        elif name == "get_post_comments":
+            result = await client.get_post_comments(args["post_urn"])
         elif name == "comment_on_post":
             result = await client.comment_on_post(args["post_urn"], args["text"])
         elif name == "delete_comment":

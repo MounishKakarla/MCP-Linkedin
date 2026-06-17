@@ -10,11 +10,21 @@ export interface ChatResponse {
   toolsUsed: string[];
 }
 
-export async function sendChatMessage(userId: string, messages: Message[], apiKey: string): Promise<ChatResponse> {
+export interface AttachedImage {
+  data: string;
+  mimeType: string;
+}
+
+export async function sendChatMessage(
+  userId: string,
+  messages: Message[],
+  apiKey: string,
+  attachedImage?: AttachedImage,
+): Promise<ChatResponse> {
   const res = await fetch(`${API_URL}/api/chat/${userId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, apiKey }),
+    body: JSON.stringify({ messages, apiKey, attachedImage }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: 'Unknown error' }));

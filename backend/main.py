@@ -1,3 +1,4 @@
+import base64
 import os
 import secrets
 import uuid
@@ -138,8 +139,18 @@ async def chat_endpoint(user_id: str, request: Request):
     messages = body.get("messages", [])
     api_key = body.get("apiKey") or None
 
+    image_data: bytes | None = None
+    image_mime_type = "image/jpeg"
+    raw_image = body.get("attachedImage")
+    if raw_image and isinstance(raw_image, dict):
+        try:
+            image_data = base64.b64decode(raw_image["data"])
+            image_mime_type = raw_image.get("mimeType", "image/jpeg")
+        except Exception:
+            pass
+
     try:
-        result = await claude_chat(messages, token, api_key=api_key)
+        result = await claude_chat(messages, token, user_id=user_id, api_key=api_key, image_data=image_data, image_mime_type=image_mime_type)
         for tool in result.get("toolsUsed", []):
             await db.log_activity(user_id, f"chat:{tool}")
         return result

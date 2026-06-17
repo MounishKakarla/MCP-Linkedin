@@ -67,3 +67,33 @@ async def get_activity_log(user_id: str) -> list[dict]:
         user_id,
     )
     return [{"tool_name": r["tool_name"], "called_at": r["called_at"].isoformat()} for r in rows]
+
+
+async def save_post(user_id: str, post_urn: str, text: str) -> None:
+    snippet = text[:80]
+    await pool().execute(
+        "INSERT INTO user_posts (user_id, post_urn, snippet) VALUES ($1, $2, $3)",
+        user_id, post_urn, snippet,
+    )
+
+
+async def get_recent_posts(user_id: str, limit: int = 10) -> list[dict]:
+    rows = await pool().fetch(
+        """
+        SELECT post_urn, snippet, created_at
+        FROM user_posts
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT $2
+        """,
+        user_id, limit,
+    )
+    return [
+        {
+            "index": i + 1,
+            "urn": r["post_urn"],
+            "snippet": r["snippet"],
+            "created_at": r["created_at"].isoformat(),
+        }
+        for i, r in enumerate(rows)
+    ]

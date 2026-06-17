@@ -44,6 +44,10 @@ async def get_token(user_id: str) -> str | None:
     return row["access_token"] if row else None
 
 
+async def revoke_token(user_id: str) -> None:
+    await pool().execute("DELETE FROM tokens WHERE user_id = $1", user_id)
+
+
 async def log_activity(user_id: str, tool_name: str) -> None:
     await pool().execute(
         "INSERT INTO activity_log (user_id, tool_name) VALUES ($1, $2)",

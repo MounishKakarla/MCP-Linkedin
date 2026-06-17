@@ -14,6 +14,7 @@ from slowapi.errors import RateLimitExceeded
 import db
 from auth import get_authorization_url, exchange_code_for_token
 from mcp_handler import handle_mcp_connection, handle_mcp_message
+from claude_chat import chat as claude_chat
 
 load_dotenv()
 
@@ -117,3 +118,32 @@ async def mcp_messages(request: Request, user_id: str):
 @app.get("/api/activity/{user_id}")
 async def activity_log(user_id: str):
     return await db.get_activity_log(user_id)
+
+
+# DELETE /api/logout/{user_id} — revoke token and clear session
+@app.delete("/api/logout/{user_id}")
+async def logout(user_id: str):
+    await db.revoke_token(user_id)
+    return {"status": "logged out"}
+
+
+# POST /api/chat/{user_id} — Claude chat with LinkedIn tools
+@app.post("/api/chat/{user_id}")
+async def chat_endpoint(user_id: str, request: Request):
+    token = await db.get_token(user_id)
+    if not token:
+        raise HTTPException(401, "No valid token. Please reconnect your LinkedIn account.")
+
+    body = await request.json()
+    messages = body.get("messages", [])
+    api_key = body.get("apiKey") or None
+
+    try:
+        result = await claude_chat(messages, token, api_key=api_key)
+        for tool in result.get("toolsUsed", []):
+            await db.log_activity(user_id, f"chat:{tool}")
+        return result
+    except ValueError as exc:
+        raise HTTPException(500, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(500, f"Chat error: {exc}") from exc

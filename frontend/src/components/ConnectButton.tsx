@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const SCOPES = [
   ['👤', 'Profile, headline & photo'],
@@ -13,28 +13,28 @@ export default function ConnectButton() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0077B5] via-[#004182] to-[#001B44] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl flex items-center justify-center text-white font-bold text-3xl mx-auto mb-5 shadow-lg">
             in
           </div>
-          <h1 className="text-xl font-semibold mb-1">LinkedIn MCP</h1>
-          <p className="text-gray-500 text-sm">
+          <h1 className="text-2xl font-bold text-white mb-2">LinkedIn MCP</h1>
+          <p className="text-white/60 text-sm">
             Give Claude read-only access to your LinkedIn network.
           </p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-5">
-          <div className="font-semibold mb-1">Connect your account</div>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl">
+          <div className="font-semibold text-white mb-1">Connect your account</div>
+          <p className="text-sm text-white/60 mb-5">
             We request read-only scopes. We never post or message on your behalf.
           </p>
 
-          <ul className="space-y-2.5 mb-5">
+          <ul className="space-y-3 mb-6">
             {SCOPES.map(([icon, label]) => (
-              <li key={label} className="flex items-center gap-2.5 text-sm text-gray-500">
-                <div className="w-7 h-7 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0">
+              <li key={label} className="flex items-center gap-3 text-sm text-white/70">
+                <div className="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
                   {icon}
                 </div>
                 {label}
@@ -44,16 +44,16 @@ export default function ConnectButton() {
 
           <button
             onClick={handleConnect}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl py-3 flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-[#0077B5] hover:bg-[#005885] text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2.5 transition-colors shadow-lg"
           >
-            <div className="w-5 h-5 bg-blue-800 rounded flex items-center justify-center text-white font-bold text-xs">
+            <div className="w-5 h-5 bg-white/20 rounded flex items-center justify-center text-white font-bold text-xs">
               in
             </div>
             Continue with LinkedIn
           </button>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-3">
+        <p className="text-center text-xs text-white/30 mt-4">
           Your OAuth token is stored server-side and never sent to the browser.
         </p>
       </div>

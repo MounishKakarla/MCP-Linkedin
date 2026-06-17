@@ -27,18 +27,70 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "Post content (plain text, max 3000 chars)",
-                        },
-                        "visibility": {
-                            "type": "string",
-                            "enum": ["PUBLIC", "CONNECTIONS"],
-                            "default": "PUBLIC",
-                            "description": "Who can see the post",
-                        },
+                        "text": {"type": "string", "description": "Post content (plain text, max 3000 chars)"},
+                        "visibility": {"type": "string", "enum": ["PUBLIC", "CONNECTIONS"], "default": "PUBLIC"},
                     },
                     "required": ["text"],
+                },
+            ),
+            types.Tool(
+                name="get_post",
+                description="Get a specific LinkedIn post by its URN.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="delete_post",
+                description="Delete one of your LinkedIn posts.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="like_post",
+                description="Like a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="unlike_post",
+                description="Remove your like from a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {"post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"}},
+                    "required": ["post_urn"],
+                },
+            ),
+            types.Tool(
+                name="comment_on_post",
+                description="Add a comment to a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "post_urn": {"type": "string", "description": "e.g. urn:li:ugcPost:123456"},
+                        "text": {"type": "string", "description": "Comment text"},
+                    },
+                    "required": ["post_urn", "text"],
+                },
+            ),
+            types.Tool(
+                name="delete_comment",
+                description="Delete one of your comments on a LinkedIn post.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "post_urn": {"type": "string", "description": "Post URN"},
+                        "comment_urn": {"type": "string", "description": "Comment URN returned by comment_on_post"},
+                    },
+                    "required": ["post_urn", "comment_urn"],
                 },
             ),
         ]
@@ -50,17 +102,28 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
         args = arguments or {}
 
         if name == "get_my_profile":
-            await db.log_activity(user_id, name)
             result = await client.get_profile()
         elif name == "create_post":
-            await db.log_activity(user_id, name)
             result = await client.create_post(
                 text=args["text"],
                 visibility=args.get("visibility", "PUBLIC"),
             )
+        elif name == "get_post":
+            result = await client.get_post(args["post_urn"])
+        elif name == "delete_post":
+            result = await client.delete_post(args["post_urn"])
+        elif name == "like_post":
+            result = await client.like_post(args["post_urn"])
+        elif name == "unlike_post":
+            result = await client.unlike_post(args["post_urn"])
+        elif name == "comment_on_post":
+            result = await client.comment_on_post(args["post_urn"], args["text"])
+        elif name == "delete_comment":
+            result = await client.delete_comment(args["post_urn"], args["comment_urn"])
         else:
             raise ValueError(f"Unknown tool: {name}")
 
+        await db.log_activity(user_id, name)
         return [types.TextContent(type="text", text=json.dumps(result))]
 
     return server

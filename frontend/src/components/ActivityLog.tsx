@@ -31,15 +31,15 @@ export default function ActivityLog({ userId }: Props) {
   }, [userId]);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5">
+    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-xl">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-gray-500">Activity log</span>
-        <span className="text-xs text-gray-400">Refreshes every 10 s</span>
+        <span className="text-sm font-semibold text-white/80">Activity log</span>
+        <span className="text-xs text-white/30">Refreshes every 10 s</span>
       </div>
 
       {log.length === 0 ? (
-        <p className="text-sm text-gray-400 py-4 text-center">
-          No activity yet. Start asking Claude questions about your LinkedIn.
+        <p className="text-sm text-white/40 py-4 text-center">
+          No activity yet. Start chatting or ask Claude questions.
         </p>
       ) : (
         <div>
@@ -47,11 +47,11 @@ export default function ActivityLog({ userId }: Props) {
             <div
               key={i}
               className={`flex items-center justify-between py-2 ${
-                i < log.length - 1 ? 'border-b border-gray-100' : ''
+                i < log.length - 1 ? 'border-b border-white/10' : ''
               }`}
             >
-              <span className="font-mono text-xs text-blue-600">{entry.tool_name}</span>
-              <span className="text-xs text-gray-400">{formatTime(entry.called_at)}</span>
+              <span className="font-mono text-xs text-blue-300">{entry.tool_name}</span>
+              <span className="text-xs text-white/40">{formatTime(entry.called_at)}</span>
             </div>
           ))}
         </div>

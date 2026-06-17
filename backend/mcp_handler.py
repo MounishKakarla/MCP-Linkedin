@@ -18,61 +18,27 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
         return [
             types.Tool(
                 name="get_my_profile",
-                description="Get your LinkedIn profile including name, headline, and photo",
+                description="Get your LinkedIn profile: name, email, and profile photo.",
                 inputSchema={"type": "object", "properties": {}},
             ),
             types.Tool(
-                name="get_my_posts",
-                description="Get your recent LinkedIn posts",
+                name="create_post",
+                description="Publish a text post to LinkedIn on your behalf.",
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "count": {"type": "integer", "default": 10, "minimum": 1, "maximum": 50}
+                        "text": {
+                            "type": "string",
+                            "description": "Post content (plain text, max 3000 chars)",
+                        },
+                        "visibility": {
+                            "type": "string",
+                            "enum": ["PUBLIC", "CONNECTIONS"],
+                            "default": "PUBLIC",
+                            "description": "Who can see the post",
+                        },
                     },
-                },
-            ),
-            types.Tool(
-                name="get_reactions_on_post",
-                description="Get reactions (likes) on a specific LinkedIn post",
-                inputSchema={
-                    "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "Post URN e.g. urn:li:ugcPost:123"}},
-                    "required": ["post_urn"],
-                },
-            ),
-            types.Tool(
-                name="get_comments_on_post",
-                description="Get comments on a specific LinkedIn post",
-                inputSchema={
-                    "type": "object",
-                    "properties": {"post_urn": {"type": "string", "description": "Post URN e.g. urn:li:ugcPost:123"}},
-                    "required": ["post_urn"],
-                },
-            ),
-            types.Tool(
-                name="get_my_organizations",
-                description="Get a list of LinkedIn organizations (company pages) that you administer",
-                inputSchema={"type": "object", "properties": {}},
-            ),
-            types.Tool(
-                name="get_organization_profile",
-                description="Get details about a specific LinkedIn organization",
-                inputSchema={
-                    "type": "object",
-                    "properties": {"org_urn": {"type": "string", "description": "Organization URN e.g. urn:li:organization:123"}},
-                    "required": ["org_urn"],
-                },
-            ),
-            types.Tool(
-                name="get_organization_posts",
-                description="Get recent posts authored by a specific LinkedIn organization",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "org_urn": {"type": "string", "description": "Organization URN e.g. urn:li:organization:123"},
-                        "count": {"type": "integer", "default": 10, "minimum": 1, "maximum": 50}
-                    },
-                    "required": ["org_urn"],
+                    "required": ["text"],
                 },
             ),
         ]
@@ -86,24 +52,12 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
         if name == "get_my_profile":
             await db.log_activity(user_id, name)
             result = await client.get_profile()
-        elif name == "get_my_posts":
+        elif name == "create_post":
             await db.log_activity(user_id, name)
-            result = await client.get_posts(args.get("count", 10))
-        elif name == "get_reactions_on_post":
-            await db.log_activity(user_id, name)
-            result = await client.get_reactions(args["post_urn"])
-        elif name == "get_comments_on_post":
-            await db.log_activity(user_id, name)
-            result = await client.get_comments(args["post_urn"])
-        elif name == "get_my_organizations":
-            await db.log_activity(user_id, name)
-            result = await client.get_my_organizations()
-        elif name == "get_organization_profile":
-            await db.log_activity(user_id, name)
-            result = await client.get_organization_profile(args["org_urn"])
-        elif name == "get_organization_posts":
-            await db.log_activity(user_id, name)
-            result = await client.get_posts(args.get("count", 10), author_urn=args["org_urn"])
+            result = await client.create_post(
+                text=args["text"],
+                visibility=args.get("visibility", "PUBLIC"),
+            )
         else:
             raise ValueError(f"Unknown tool: {name}")
 

@@ -88,6 +88,27 @@ class LinkedInClient:
             "Organization profile requires r_organization_social — a LinkedIn Partner scope."
         )
 
+    async def create_post(self, text: str, visibility: str = "PUBLIC") -> dict:
+        profile = await self.get_profile()
+        author_urn = f"urn:li:person:{profile['id']}"
+        payload = {
+            "author": author_urn,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": text},
+                    "shareMediaCategory": "NONE",
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": visibility
+            },
+        }
+        r = await self._client.post("ugcPosts", json=payload)
+        _raise_for_status(r)
+        post_id = r.headers.get("x-restli-id", "")
+        return {"status": "published", "postUrn": post_id}
+
     async def get_posts(self, count: int = 10, author_urn: str | None = None) -> dict:
         if not author_urn:
             profile = await self.get_profile()

@@ -1,0 +1,50 @@
+services:
+  # ── Backend ────────────────────────────────────────────────────────────────
+  - type: web
+    name: linkedin-mcp-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && python migrate.py && uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: linkedin-mcp-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      # Set these manually in the Render dashboard after first deploy:
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      # https://<backend-service-name>.onrender.com/auth/linkedin/callback
+      - key: LINKEDIN_REDIRECT_URI
+        sync: false
+      # https://<frontend-service-name>.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+  - type: static
+    name: linkedin-mcp-frontend
+    buildCommand: cd frontend && npm install --frozen-lockfile && npm run build
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # https://<backend-service-name>.onrender.com
+      - key: VITE_API_URL
+        sync: false
+
+# ── Database ─────────────────────────────────────────────────────────────────
+databases:
+  - name: linkedin-mcp-db
+    databaseName: linkedin_mcp
+    user: linkedin_mcp_user
+    plan: free
+    region: oregon

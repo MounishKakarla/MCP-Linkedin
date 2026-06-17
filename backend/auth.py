@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 # r_liteprofile / r_emailaddress / r_1st_connections_size / r_member_social /
 # r_organization_admin / r_organization_social are deprecated or require
 # LinkedIn Partner Program approval — requesting them breaks the OAuth page.
-SCOPES = "openid profile email"
+SCOPES = "openid profile email w_member_social"
 
 
 def _redirect_uri() -> str:

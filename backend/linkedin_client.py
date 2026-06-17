@@ -2,6 +2,7 @@ import httpx
 from urllib.parse import quote
 
 BASE_URL = "https://api.linkedin.com/v2/"
+REST_BASE_URL = "https://api.linkedin.com/rest/"
 
 
 class LinkedInClient:
@@ -13,12 +14,21 @@ class LinkedInClient:
                 "X-Restli-Protocol-Version": "2.0.0",
             },
         )
+        self._rest_client = httpx.AsyncClient(
+            base_url=REST_BASE_URL,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "LinkedIn-Version": "202401",
+                "X-Restli-Protocol-Version": "2.0.0",
+            },
+        )
 
     async def __aenter__(self) -> "LinkedInClient":
         return self
 
     async def __aexit__(self, *_) -> None:
         await self._client.aclose()
+        await self._rest_client.aclose()
 
     async def get_profile(self) -> dict:
         # OIDC userinfo endpoint — works with openid+profile+email scopes.
@@ -64,9 +74,9 @@ class LinkedInClient:
         if not author_urn:
             profile = await self.get_profile()
             author_urn = f"urn:li:person:{profile['id']}"
-        r = await self._client.get("ugcPosts", params={
-            "q": "authors",
-            "authors": f"List({author_urn})",
+        r = await self._rest_client.get("posts", params={
+            "author": author_urn,
+            "q": "author",
             "count": count,
             "sortBy": "LAST_MODIFIED",
         })
@@ -74,11 +84,14 @@ class LinkedInClient:
         return r.json()
 
     async def get_reactions(self, post_urn: str) -> dict:
-        r = await self._client.get(f"socialActions/{quote(post_urn, safe='')}/likes")
+        r = await self._rest_client.get(f"reactions/{quote(post_urn, safe='')}", params={"q": "entity"})
         r.raise_for_status()
         return r.json()
 
     async def get_comments(self, post_urn: str) -> dict:
-        r = await self._client.get(f"socialActions/{quote(post_urn, safe='')}/comments")
+        r = await self._rest_client.get("socialActions", params={
+            "q": "targetEntity",
+            "targetEntity": post_urn,
+        })
         r.raise_for_status()
         return r.json()

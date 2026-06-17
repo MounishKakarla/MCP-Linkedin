@@ -26,3 +26,7 @@ Thumbs.db
 .vscode/
 .idea/
 .gemini/
+
+# Documentation and Wireframes
+linkedin-mcp-instructions.md
+linkedin-mcp-wireframes.html

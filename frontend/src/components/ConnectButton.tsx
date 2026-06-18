@@ -6,10 +6,9 @@ interface Props {
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const SCOPES = [
-  ['👤', 'Profile, headline & photo'],
-  ['🔗', 'First-degree connection count'],
-  ['📝', 'Your posts, reactions & comments'],
-  ['🔒', 'No write access — ever'],
+  ['👤', 'Profile, email & photo'],
+  ['📝', 'Read your posts, reactions & comments'],
+  ['✍️', 'Create and publish new posts'],
 ] as const;
 
 export default function ConnectButton({ onToggleTheme, theme }: Props) {
@@ -43,14 +42,14 @@ export default function ConnectButton({ onToggleTheme, theme }: Props) {
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">LinkedIn MCP</h1>
           <p className="text-slate-500 dark:text-white/50 text-sm">
-            Give Claude read-only access to your LinkedIn network.
+            Connect Claude to your LinkedIn account.
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 dark:bg-white/5 dark:border-white/10 dark:backdrop-blur-xl dark:shadow-none">
           <div className="font-semibold text-slate-800 dark:text-white mb-1">Connect your account</div>
           <p className="text-sm text-slate-500 dark:text-white/50 mb-5">
-            We request read-only scopes. We never post or message on your behalf.
+            We request access to read your profile and create posts on your behalf.
           </p>
 
           <ul className="space-y-3 mb-6">

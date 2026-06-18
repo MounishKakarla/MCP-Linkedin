@@ -27,6 +27,9 @@ Thumbs.db
 .idea/
 .gemini/
 
+# App Data
+backend/uploads/
+
 # Documentation and Wireframes
 linkedin-mcp-instructions.md
 linkedin-mcp-wireframes.html

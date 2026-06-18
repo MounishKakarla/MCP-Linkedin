@@ -35,6 +35,7 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
                         "text": {"type": "string", "description": "Post content (plain text, max 3000 chars)"},
                         "visibility": {"type": "string", "enum": ["PUBLIC", "CONNECTIONS"], "default": "PUBLIC"},
                         "image_url": {"type": "string", "description": "Optional public URL of an image to attach"},
+                        "image_base64": {"type": "string", "description": "Optional raw base64 encoded string of an image file to attach (without the data:image/png;base64, prefix)"},
                     },
                     "required": ["text"],
                 },
@@ -177,10 +178,19 @@ def _build_server(user_id: str, client: LinkedInClient) -> Server:
         elif name == "get_my_recent_posts":
             result = await db.get_recent_posts(user_id)
         elif name == "create_post":
+            image_data = None
+            image_mime_type = "image/jpeg"
+            if "image_base64" in args:
+                import base64
+                image_data = base64.b64decode(args["image_base64"])
+                # We can assume jpeg, or let LinkedIn's API handle it if we guess wrong.
+
             result = await client.create_post(
                 text=args["text"],
                 visibility=args.get("visibility", "PUBLIC"),
                 image_url=args.get("image_url"),
+                image_data=image_data,
+                image_mime_type=image_mime_type,
             )
             if result.get("postUrn"):
                 await db.save_post(user_id, result["postUrn"], args["text"])

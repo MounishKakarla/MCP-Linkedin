@@ -6,9 +6,10 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -39,6 +40,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -126,6 +130,23 @@ async def activity_log(user_id: str):
 async def logout(user_id: str):
     await db.revoke_token(user_id)
     return {"status": "logged out"}
+
+
+# POST /api/upload — upload a media file temporarily to get a URL
+@app.post("/api/upload")
+async def upload_media(request: Request, file: UploadFile = File(...)):
+    # Generate a unique filename to prevent collisions
+    ext = os.path.splitext(file.filename or "")[1]
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = os.path.join("uploads", filename)
+    
+    with open(filepath, "wb") as buffer:
+        import shutil
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Return the full URL to the file
+    base_url = str(request.base_url).rstrip("/")
+    return {"url": f"{base_url}/uploads/{filename}"}
 
 
 # POST /api/chat/{user_id} — Claude chat with LinkedIn tools

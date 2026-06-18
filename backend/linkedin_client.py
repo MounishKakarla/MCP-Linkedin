@@ -300,9 +300,13 @@ class LinkedInClient:
         return {"status": "reaction_removed", "postUrn": post_urn}
 
     async def get_post_comments(self, post_urn: str) -> dict:
-        r = await self._client.get(f"socialActions/{_enc(post_urn)}/comments")
-        _raise_for_status(r)
+        r = await self._rest_client.get("socialActions", params={
+            "q": "targetEntity",
+            "targetEntity": post_urn,
+        })
+        r.raise_for_status()
         return r.json()
+
 
     # ── Comments ──────────────────────────────────────────────────────────────
 
